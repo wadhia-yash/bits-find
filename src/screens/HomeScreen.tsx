@@ -94,8 +94,11 @@ export function HomeScreen({ navigation }: any) {
 
   async function onRefresh() {
     setRefreshing(true);
-    await refresh();
-    setRefreshing(false);
+    try {
+      await refresh();
+    } finally {
+      setRefreshing(false);
+    }
   }
 
   return (
@@ -236,9 +239,26 @@ export function HomeScreen({ navigation }: any) {
       {/* ------------------------------------------------------- filters */}
       <Modal visible={filtersOpen && features.advancedFilters} animationType="slide" transparent onRequestClose={() => setFiltersOpen(false)}>
         <View style={styles.sheetBackdrop}>
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            accessibilityRole="button"
+            accessibilityLabel="Close filters"
+            onPress={() => setFiltersOpen(false)}
+          />
           <View style={styles.sheet}>
             <View style={styles.sheetHandle} />
-            <Text style={styles.sheetTitle}>Filters</Text>
+            <View style={styles.sheetHeader}>
+              <Text style={styles.sheetTitle}>Filters</Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Close filters"
+                onPress={() => setFiltersOpen(false)}
+                hitSlop={8}
+                style={styles.sheetClose}
+              >
+                <Ionicons name="close" size={22} color={colors.text} />
+              </Pressable>
+            </View>
 
             <SectionHeading>Category</SectionHeading>
             <ChipRow>
@@ -290,6 +310,12 @@ export function HomeScreen({ navigation }: any) {
       {/* -------------------------------------------------------- alerts */}
       <Modal visible={alertsOpen && features.campusAlerts} animationType="slide" transparent onRequestClose={() => setAlertsOpen(false)}>
         <View style={styles.sheetBackdrop}>
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            accessibilityRole="button"
+            accessibilityLabel="Close campus alerts"
+            onPress={() => setAlertsOpen(false)}
+          />
           <View style={[styles.sheet, { maxHeight: '75%' }]}>
             <View style={styles.sheetHandle} />
             <Text style={styles.sheetTitle}>Campus alerts</Text>
@@ -446,6 +472,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   sheetTitle: { ...font.h2 },
+  sheetHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  sheetClose: {
+    width: TOUCH_TARGET,
+    height: TOUCH_TARGET,
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: -spacing.sm,
+  },
   sheetSubtitle: { ...font.caption, marginTop: 2, marginBottom: spacing.md },
   sheetActions: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.xl },
   rowWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
