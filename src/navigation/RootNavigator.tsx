@@ -48,6 +48,7 @@ function TabIcon({
 }
 
 function Tabs() {
+  const { unreadAlerts } = useApp();
   // Gesture-navigation devices reserve a strip at the bottom; without adding it
   // to the bar height the tab labels get clipped by the system handle.
   const insets = useSafeAreaInsets();
@@ -67,6 +68,7 @@ function Tabs() {
           backgroundColor: colors.surface,
         },
         tabBarLabelStyle: { fontSize: 11, fontWeight: '700', marginTop: 2 },
+        tabBarBadgeStyle: { backgroundColor: colors.red, fontSize: 10, fontWeight: '700' },
       }}
     >
       <Tab.Screen
@@ -74,6 +76,7 @@ function Tabs() {
         component={HomeScreen}
         options={{
           title: 'Lost items',
+          tabBarBadge: unreadAlerts > 0 ? unreadAlerts : undefined,
           tabBarIcon: ({ focused }) => (
             <TabIcon name={focused ? 'search' : 'search-outline'} focused={focused} />
           ),

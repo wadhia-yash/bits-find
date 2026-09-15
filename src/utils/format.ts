@@ -27,6 +27,11 @@ export function fullDateTime(iso: string): string {
   });
 }
 
+export function daysLeft(expiresAt: string): number {
+  const ms = new Date(expiresAt).getTime() - Date.now();
+  return Math.max(0, Math.ceil(ms / 86400000));
+}
+
 export const STATUS_META: Record<
   ItemStatus,
   { label: string; fg: string; bg: string }
@@ -34,6 +39,8 @@ export const STATUS_META: Record<
   OPEN: { label: 'Open', fg: colors.blue, bg: colors.blueSoft },
   CLAIM_PENDING: { label: 'Claim pending', fg: colors.amber, bg: colors.amberSoft },
   RETURNED: { label: 'Returned', fg: colors.green, bg: colors.greenSoft },
+  EXPIRED: { label: 'Expired', fg: colors.grey, bg: colors.greySoft },
+  HIDDEN: { label: 'Cancelled', fg: colors.red, bg: colors.redSoft },
 };
 
 /** Initials for the avatar chip on a request card. */

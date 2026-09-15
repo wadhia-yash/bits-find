@@ -1,77 +1,147 @@
 # BTS Find — test plan
 
-The demo walkthrough for the proof of concept. Everything here runs on a single
-device against the in-memory mock data; there is no server to set up.
+Covers the seven demo-day success criteria from PRD §10, plus the rules tests from
+NFR #30. Section A runs against the pilot build as it stands. Section B needs Firebase
+wired up first (see [FIREBASE_MIGRATION.md](FIREBASE_MIGRATION.md)).
 
-Set-up: one device. You will sign in and out as different seeded students as you
-go. Because the store is in memory, **relaunching the app resets everything** —
-so run the whole walkthrough in one sitting.
+Set-up: two devices. Device 1 signs in as **Ishita Rao** (Pilani), device 2 as **Aarav
+Mehta** (Pilani). Keep **Meera Nair** (Goa) ready for the campus-scoping check.
 
 ---
 
-## 1 — Owner creates a lost request
+## A. Demo-day walkthrough
 
-1. Sign in as **Ishita Rao** (Pilani).
-2. Tap **Report lost item**.
-3. Title `Black umbrella`, category `Other`, description of 10+ characters,
-   zone `Library`, when `Earlier today`.
-4. Publish.
+### A1 — Owner creates a Lost Item Request (criterion #33)
 
-**Expect:** the request appears at the top of the feed with an `Open` badge and a
-`You` tag. Time the whole thing — filing a request should take under a minute.
+1. On device 1, tap **Report lost item**.
+2. Title `Black umbrella`, category `Other`, description, zone `Library`, when `Earlier today`.
+3. Publish.
 
-## 2 — A finder responds
+**Expect:** the request appears at the top of the feed with an `Open` badge, and an
+alert lands in the bell sheet. Time the whole thing — goal #5 is under 60 seconds.
 
-1. Go to **Profile → Sign out**, then sign in as **Aarav Mehta** (Pilani).
-2. The umbrella is on the feed, with no `You` tag this time. Open it.
-3. Tap **I found this item**, write a detail of 12+ characters, send.
+### A2 — Second same-campus device receives the alert and responds (criterion #34)
 
-**Expect:** the status flips to `Claim pending`. Under **My activity → Items I
-found**, the response shows as *Awaiting owner*.
+1. On device 2, pull to refresh the feed. The new request is there.
+2. Open it → **I found this item**.
+3. Write a match detail of 12+ characters, choose **Direct to owner**, send.
 
-## 3 — A different campus cannot see the post
+**Expect:** the item's status flips to `Claim pending` on both devices; device 2 sees
+*Awaiting owner* under **My activity → Items I found**.
 
-1. Sign out and sign in as **Meera Nair** (Goa).
+### A3 — Different-campus user cannot read the post or image (criterion #35)
+
+1. Sign out on device 2 and sign in as **Meera Nair** (Goa).
 2. Search the feed for `umbrella`.
 
-**Expect:** no result. The Goa feed shows only `Room keys with red keychain`.
-This is enforced in `itemsRepo.byCampus`, not in the screen.
+**Expect:** no result. The Goa feed shows only `Room keys with red keychain`. Section B2
+proves the same thing at the rules layer, which is what actually enforces it.
 
-## 4 — The owner verifies the match
+### A4 — Finder chooses direct handover or BITS Admin (criterion #36)
 
-1. Sign out and sign back in as **Ishita Rao**.
-2. **My activity** shows *1 match waiting for your verification*.
-3. Open the request. The finder's private detail is there, with **Not mine** and
-   **This is mine**.
-4. Tap **This is mine**.
+Repeat A2 on `Steel water bottle with stickers`, this time picking **Submit to BITS
+Admin Department**.
 
-**Expect:** the match badge turns `Accepted` and **Confirm item returned**
-appears.
+**Expect:** the drop-off desk for the campus is shown, and the owner's detail screen
+offers **I collected it from Admin** before the return can be confirmed.
 
-## 5 — The loop closes
+### A5 — Owner confirmation closes the loop (criterion #37)
 
-1. Tap **Confirm item returned** → **Yes, returned**.
+1. On device 1, open the request → **This is mine** on the pending match.
+2. For an Admin handover, tap **I collected it from Admin** first.
+3. Tap **Confirm item returned**.
 
-**Expect:** the request badge turns `Returned`, a green *Closed* notice appears,
-and the request is gone from the feed but still listed in **My activity**.
+**Expect:** status becomes `Returned`; the request disappears from the default feed
+(`All active`) but is still visible under the `Returned` filter and in **My activity**.
 
-## 6 — Rejecting a match reopens the request
+### A6 — Non-participants cannot see private match details (criterion #38)
 
-1. As **Aarav Mehta**, respond to `Steel water bottle with stickers`.
-2. As **Ishita Rao**, open it and tap **Not mine** → **Reject**.
+1. Sign in on device 2 as a third Pilani account (`Kabir Sethi`).
+2. Open a request that has a match from someone else.
 
-**Expect:** the match reads `Rejected`, and because no other live claim is left,
-the request goes back to `Open` on the feed.
+**Expect:** the match text is not rendered at all — only the owner and the responding
+finder get it. Section B3 is the authoritative version of this test.
 
-## 7 — Nobody can respond to their own request
+### A7 — Full flow, no crashes (criterion #39)
 
-1. As **Ishita Rao**, open one of your own open requests.
+Run A1 → A5 end to end on one Android and one iOS device. Also check:
 
-**Expect:** no **I found this item** button — only the match-responses section.
+- pull-to-refresh on the feed
+- every filter chip, then **Clear all**
+- reporting a sensitive item (`ID Card`) — the warning appears and no photo is required
+- **Profile → Reset demo data** restores the seed state
 
-## 8 — A cold start resets the demo
+### A8 — Expiry (rule 26)
 
-1. Fully close the app and reopen it.
+Change `EXPIRY_DAYS` in `src/services/db.ts` to `0`, reload the app.
 
-**Expect:** you are signed out and the seed data is back to its original state.
-That is intentional: this build stores nothing on the device.
+**Expect:** open requests move to `Expired` and leave the default feed. Set it back to
+`14` afterwards.
+
+### A9 — Accessibility (NFR #31)
+
+Turn on TalkBack / VoiceOver and traverse the feed and the report form.
+
+**Expect:** every card announces title, category, zone and status; every button and radio
+announces its label and selected state; no tap target is under 44pt.
+
+---
+
+## B. Firebase rules tests (NFR #30)
+
+Run with `@firebase/rules-unit-testing` against the emulator:
+
+```bash
+firebase emulators:exec --only firestore,storage "npm run test:rules"
+```
+
+### B1 — Unverified accounts are locked out
+
+| Actor | Action | Expect |
+|---|---|---|
+| No auth | read `items/*` | denied |
+| `email_verified: false` | read `items/*` | denied |
+| `someone@gmail.com`, verified | read `items/*` | denied |
+
+### B2 — Cross-campus access is denied
+
+| Actor | Action | Expect |
+|---|---|---|
+| Goa student | read a Pilani `items/*` doc | denied |
+| Goa student | read `items/pilani/{uid}/photo.jpg` in Storage | denied |
+| Pilani student | read a Pilani `items/*` doc | allowed |
+| Pilani student | create an item with `campusId: 'goa'` | denied |
+| Pilani student | update their own profile's `campusId` | denied |
+
+### B3 — Private match details
+
+| Actor | Action | Expect |
+|---|---|---|
+| Item owner | read `items/{id}/matches/*` | allowed |
+| Responding finder | read their own match | allowed |
+| Uninvolved same-campus student | read that match | denied |
+| Finder | create a match on their *own* lost request | denied |
+| Finder | create a match with `matchText` under 12 chars | denied |
+| Finder | change `status` to `ACCEPTED` on their own match | denied |
+| Non-owner | update the item document | denied |
+| Anyone | delete an item or a match | denied |
+
+### B4 — Storage limits
+
+| Actor | Action | Expect |
+|---|---|---|
+| Verified same-campus | upload a 1 MB JPEG to their own path | allowed |
+| Verified same-campus | upload a 5 MB JPEG | denied |
+| Verified same-campus | upload a PDF | denied |
+| Verified same-campus | upload under *another* uid's path | denied |
+
+---
+
+## C. Non-functional checks
+
+| NFR | Check | Target |
+|---|---|---|
+| #27 | Time from tapping the Feed tab to first card, on 4G | under 2 s |
+| #28 | Time from **Publish** to the alert appearing on device 2 | under 30 s, 95% of 20 runs |
+| #29 | Publish the same request twice in a row | exactly one alert per item |
+| #32 | `grep -r "AIza" src/` | no match |

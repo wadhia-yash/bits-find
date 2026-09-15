@@ -16,15 +16,18 @@ import {
   ViewStyle,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   colors,
   font,
+  gradients,
   radius,
   shadow,
   shadowLifted,
   spacing,
   TOUCH_TARGET,
 } from '../theme';
+import { features } from '../config/phase';
 
 type IonName = keyof typeof Ionicons.glyphMap;
 
@@ -67,8 +70,9 @@ export function Button({
       </View>
     );
 
-  // The primary action is a solid navy fill; everything else stays outlined, so
-  // there is never more than one obvious next step on a screen.
+  // The primary action carries the brand gradient; everything else stays flat so
+  // there is never more than one obvious next step on a screen. Before the phase
+  // that introduces the polished visual language it is a flat navy fill instead.
   if (variant === 'primary') {
     return (
       <Pressable
@@ -79,14 +83,26 @@ export function Button({
         disabled={isOff}
         style={({ pressed }) => [
           styles.buttonShell,
+          !isOff && features.polishedUi && shadow,
           pressed && !isOff && { opacity: 0.9, transform: [{ scale: 0.995 }] },
           isOff && { opacity: 0.45 },
           style,
         ]}
       >
-        <View style={[styles.button, { backgroundColor: colors.navy }]}>
-          {inner('#FFFFFF')}
-        </View>
+        {features.polishedUi ? (
+          <LinearGradient
+            colors={gradients.cta}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.button}
+          >
+            {inner('#FFFFFF')}
+          </LinearGradient>
+        ) : (
+          <View style={[styles.button, { backgroundColor: colors.navy }]}>
+            {inner('#FFFFFF')}
+          </View>
+        )}
       </Pressable>
     );
   }

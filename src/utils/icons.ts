@@ -24,4 +24,6 @@ export const STATUS_ICON: Record<ItemStatus, IonName> = {
   OPEN: 'radio-button-on-outline',
   CLAIM_PENDING: 'time-outline',
   RETURNED: 'checkmark-circle-outline',
+  EXPIRED: 'hourglass-outline',
+  HIDDEN: 'eye-off-outline',
 };

@@ -31,6 +31,13 @@ export const colors = {
   greySoft: '#EDF0F5',
 };
 
+/** Hero / CTA gradients — kept here so every surface uses the same ramp. */
+export const gradients = {
+  brand: ['#1B3A6A', '#12294D'] as const,
+  cta: ['#1E4680', '#12294D'] as const,
+  accent: ['#2E7BF6', '#1F6FEB'] as const,
+};
+
 export const spacing = {
   xs: 4,
   sm: 8,

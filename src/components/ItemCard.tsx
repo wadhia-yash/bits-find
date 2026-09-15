@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Item } from '../types';
 import { colors, font, radius, shadow, spacing } from '../theme';
@@ -11,8 +11,8 @@ import { Badge, IconTile } from './ui';
  * Feed row for one Lost Item Request. Shows only what the alert preview is
  * allowed to show — title, category, zone, status — never contact details.
  *
- * The category icon carries the row, so the feed keeps a steady rhythm and can
- * be scanned by shape and colour before any text is read.
+ * When there is no photo the category icon stands in, so the row still reads at
+ * a glance and the feed keeps a steady rhythm.
  */
 export function ItemCard({
   item,
@@ -34,7 +34,11 @@ export function ItemCard({
       style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
     >
       <View style={styles.row}>
-        <IconTile name={cat.name} fg={cat.fg} bg={cat.bg} size={58} />
+        {item.imageUrlOptional ? (
+          <Image source={{ uri: item.imageUrlOptional }} style={styles.thumb} />
+        ) : (
+          <IconTile name={cat.name} fg={cat.fg} bg={cat.bg} size={58} />
+        )}
 
         <View style={{ flex: 1 }}>
           <View style={styles.titleRow}>
@@ -89,6 +93,7 @@ const styles = StyleSheet.create({
   },
   cardPressed: { opacity: 0.92, transform: [{ scale: 0.994 }] },
   row: { flexDirection: 'row', gap: spacing.md, alignItems: 'center' },
+  thumb: { width: 58, height: 58, borderRadius: 16, backgroundColor: colors.greySoft },
   titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
   title: { ...font.h3, flex: 1, lineHeight: 21 },
   mineTag: {

@@ -1,0 +1,43 @@
+rules_version = '2';
+
+/**
+ * BTS Find — Storage rules (PRD §7.3 rule 24).
+ *
+ * Item photos are stored under items/{campusId}/{uid}/{file} so the campus and
+ * the uploader are both provable from the path alone — no document read needed
+ * on the hot path.
+ */
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isVerified() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.matches('.*@.*bits-pilani[.]ac[.]in');
+    }
+
+    function myCampus() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.campusId;
+    }
+
+    match /items/{campusId}/{uid}/{fileName} {
+      // Same-campus verified students only — the cross-campus image read in
+      // demo-day criterion #35 fails here.
+      allow read: if isVerified() && campusId == myCampus();
+
+      allow write: if isVerified()
+        && request.auth.uid == uid
+        && campusId == myCampus()
+        // Client compresses before upload (NFR #29); 3 MB is the ceiling.
+        && request.resource.size < 3 * 1024 * 1024
+        && request.resource.contentType.matches('image/(jpeg|png|webp)');
+
+      allow delete: if isVerified() && request.auth.uid == uid;
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

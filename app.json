@@ -14,7 +14,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "in.acin.bitspilani.btsfind"
+      "bundleIdentifier": "in.acin.bitspilani.btsfind",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "BTS Find needs photo access so you can attach a picture of the item you lost."
+      }
     },
     "android": {
       "package": "in.acin.bitspilani.btsfind",
@@ -28,6 +31,31 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "phase": 3,
+      "firebase": {
+        "apiKey": "AIzaSyCS9p2oGo87HRBUulULNMsWz-tRb_ajUJ8",
+        "authDomain": "bits-find.firebaseapp.com",
+        "projectId": "bits-find",
+        "storageBucket": "bits-find.firebasestorage.app",
+        "messagingSenderId": "1002630517907",
+        "appId": "1:1002630517907:web:bb3d26e8745e51c027e966"
+      }
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "BTS Find needs photo access so you can attach a picture of the item you lost."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#12294D"
+        }
+      ]
+    ]
   }
 }

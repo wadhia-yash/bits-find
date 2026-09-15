@@ -1,0 +1,33 @@
+{
+  "//": "The collection-group query on matches.finderId (My activity → Items I found) needs no entry here: Firestore's automatic single-field indexes already cover a single equality filter across collection groups.",
+  "indexes": [
+    {
+      "//": "Campus feed: items for one campus, newest first (PRD §5 lost requests feed).",
+      "collectionGroup": "items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "campusId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "//": "Campus alerts, newest first.",
+      "collectionGroup": "alerts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "campusId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "//": "Scheduled expiry sweep: open requests past their expiry date.",
+      "collectionGroup": "items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "expiresAt", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

@@ -1,0 +1,177 @@
+rules_version = '2';
+
+/**
+ * BTS Find — Firestore security rules (PRD §7.3 rules 24-25).
+ *
+ * Three invariants this file exists to enforce:
+ *   1. Only a verified institutional account can read or write app data.
+ *   2. A user can only ever touch documents on their own campus.
+ *   3. Private match details are readable by exactly two people: the item
+ *      owner and the finder who wrote them.
+ *
+ * One deliberate exception to (1): a brand-new account must be able to create
+ * and read *its own* profile before the verification link is clicked, otherwise
+ * sign-up could never write the campusId that all the other rules depend on.
+ * That exception is scoped to /users/{ownUid} and nothing else.
+ */
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /* ------------------------------------------------------------ helpers */
+
+    function isBitsAccount() {
+      return request.auth != null
+        && request.auth.token.email is string
+        && request.auth.token.email.matches('.*@.*bits-pilani[.]ac[.]in');
+    }
+
+    function isVerified() {
+      return isBitsAccount() && request.auth.token.email_verified == true;
+    }
+
+    function profile() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function myCampus() {
+      return profile().campusId;
+    }
+
+    function sameCampus(campusId) {
+      return isVerified() && campusId == myCampus();
+    }
+
+    function itemDoc(itemId) {
+      return get(/databases/$(database)/documents/items/$(itemId)).data;
+    }
+
+    /* ------------------------------------------------------------- users */
+
+    match /users/{uid} {
+      // A profile is private to its owner. Display names travel on the item and
+      // match documents, so nobody needs to read another user's profile.
+      allow read: if isBitsAccount() && request.auth.uid == uid;
+
+      // Pre-verification on purpose — see the note at the top of this file.
+      allow create: if isBitsAccount()
+        && request.auth.uid == uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.campusId is string
+        && request.resource.data.name is string;
+
+      // campusId and email are set once at sign-up and never edited by the
+      // client — otherwise a user could hop campuses and defeat rule 13.
+      allow update: if isBitsAccount()
+        && request.auth.uid == uid
+        && request.resource.data.campusId == resource.data.campusId
+        && request.resource.data.email == resource.data.email;
+
+      allow delete: if false;
+    }
+
+    /* ------------------------------------------------------------- items */
+
+    match /items/{itemId} {
+      allow read: if sameCampus(resource.data.campusId);
+
+      allow create: if isVerified()
+        && request.resource.data.campusId == myCampus()
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.status == 'OPEN'
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 3
+        && request.resource.data.title.size() <= 80
+        && request.resource.data.description.size() <= 500
+        && request.resource.data.lastSeenZone is string;
+
+      // Only the owner edits or closes a request (rule 25). Ownership, campus
+      // and creation time are immutable.
+      allow update: if isVerified()
+        && resource.data.ownerId == request.auth.uid
+        && request.resource.data.ownerId == resource.data.ownerId
+        && request.resource.data.campusId == resource.data.campusId
+        && request.resource.data.createdAt == resource.data.createdAt;
+
+      // Requests are never hard-deleted; the owner sets status to HIDDEN so the
+      // match history stays auditable.
+      allow delete: if false;
+
+      /* --------------------------------------------------------- matches */
+
+      match /matches/{matchId} {
+        function parentItem() {
+          return itemDoc(itemId);
+        }
+
+        // Private proof: owner or the finder who submitted it, nobody else.
+        allow read: if isVerified()
+          && sameCampus(parentItem().campusId)
+          && (parentItem().ownerId == request.auth.uid
+              || resource.data.finderId == request.auth.uid);
+
+        allow create: if isVerified()
+          && sameCampus(parentItem().campusId)
+          && request.resource.data.finderId == request.auth.uid
+          // A finder cannot respond to their own lost request.
+          && parentItem().ownerId != request.auth.uid
+          && parentItem().status in ['OPEN', 'CLAIM_PENDING']
+          && request.resource.data.status == 'PENDING'
+          && request.resource.data.handoverMode in ['DIRECT', 'ADMIN']
+          && request.resource.data.matchText.size() >= 12
+          && request.resource.data.matchText.size() <= 400;
+
+        // The owner accepts/rejects; the finder may only update the admin
+        // drop-off state of their own match, never its status.
+        allow update: if isVerified()
+          && sameCampus(parentItem().campusId)
+          && (
+               parentItem().ownerId == request.auth.uid
+               || (resource.data.finderId == request.auth.uid
+                   && request.resource.data.status == resource.data.status)
+             )
+          && request.resource.data.finderId == resource.data.finderId;
+
+        allow delete: if false;
+      }
+    }
+
+    /* --------------------------------------------------------- handovers */
+
+    match /handover/{handoverId} {
+      function parentItem() {
+        return itemDoc(resource.data.itemId);
+      }
+
+      allow read: if isVerified()
+        && sameCampus(parentItem().campusId)
+        && (parentItem().ownerId == request.auth.uid
+            || resource.data.finderId == request.auth.uid);
+
+      allow create: if isVerified()
+        && request.resource.data.finderId == request.auth.uid
+        && sameCampus(itemDoc(request.resource.data.itemId).campusId)
+        && request.resource.data.mode in ['DIRECT', 'ADMIN'];
+
+      allow update: if isVerified()
+        && sameCampus(parentItem().campusId)
+        && (parentItem().ownerId == request.auth.uid
+            || resource.data.finderId == request.auth.uid);
+
+      allow delete: if false;
+    }
+
+    /* ------------------------------------------------------------ alerts */
+
+    match /alerts/{alertId} {
+      // Written only by the Cloud Function that fans out to the campus topic.
+      allow read: if sameCampus(resource.data.campusId);
+      allow write: if false;
+    }
+
+    // Anything not matched above is denied.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,17 +1,19 @@
 import React, { useMemo, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, font, radius, spacing } from '../theme';
 import { Badge, Button, Card, EmptyState } from '../components/ui';
 import { useApp } from '../store/AppContext';
-import { Item, Match } from '../types';
+import { ADMIN_DESKS, Item, Match } from '../types';
 import { relativeTime, STATUS_META } from '../utils/format';
+import { features } from '../config/phase';
 
 type Tab = 'LOST' | 'FOUND';
 
-/** My activity: my lost requests, the items I found, and confirming a return. */
+/** PRD §6 — My activity: my lost requests, found matches, handover status, confirm Returned. */
 export function MyActivityScreen({ navigation }: any) {
-  const { user, items, matches, confirmReturned } = useApp();
+  const { user, items, matches, confirmReturned, markAdminCollected } = useApp();
   const [tab, setTab] = useState<Tab>('LOST');
 
   const myRequests = useMemo(
@@ -31,7 +33,9 @@ export function MyActivityScreen({ navigation }: any) {
   const pendingForMe = useMemo(
     () =>
       matches.filter(
-        (m) => m.status === 'PENDING' && myRequests.some((i) => i.id === m.itemId),
+        (m) =>
+          m.status === 'PENDING' &&
+          myRequests.some((i) => i.id === m.itemId),
       ).length,
     [matches, myRequests],
   );
@@ -48,16 +52,8 @@ export function MyActivityScreen({ navigation }: any) {
       </View>
 
       <View style={styles.tabs}>
-        <TabButton
-          label={`My lost requests (${myRequests.length})`}
-          active={tab === 'LOST'}
-          onPress={() => setTab('LOST')}
-        />
-        <TabButton
-          label={`Items I found (${myFinds.length})`}
-          active={tab === 'FOUND'}
-          onPress={() => setTab('FOUND')}
-        />
+        <TabButton label={`My lost requests (${myRequests.length})`} active={tab === 'LOST'} onPress={() => setTab('LOST')} />
+        <TabButton label={`Items I found (${myFinds.length})`} active={tab === 'FOUND'} onPress={() => setTab('FOUND')} />
       </View>
 
       {tab === 'LOST' ? (
@@ -69,7 +65,7 @@ export function MyActivityScreen({ navigation }: any) {
             <EmptyState
               icon="document-text-outline"
               title="No lost requests yet"
-              body="When you report something you lost, it shows up here with its match status."
+              body="When you report something you lost, it shows up here with its match and handover status."
             />
           }
           renderItem={({ item }) => {
@@ -98,10 +94,31 @@ export function MyActivityScreen({ navigation }: any) {
 
                 {accepted ? (
                   <View style={styles.handoverBox}>
-                    <Text style={styles.handoverLabel}>Direct handover</Text>
-                    <Text style={styles.handoverBody}>
-                      Arrange pickup with {accepted.finderName}.
+                    <Text style={styles.handoverLabel}>
+                      {accepted.handoverMode === 'DIRECT'
+                        ? 'Direct handover'
+                        : 'Collect from BITS Admin'}
                     </Text>
+                    <Text style={styles.handoverBody}>
+                      {accepted.handoverMode === 'DIRECT'
+                        ? `Arrange pickup with ${accepted.finderName}.`
+                        : accepted.adminDropoffStatus === 'COLLECTED'
+                          ? 'Collected from the Admin Department.'
+                          : ADMIN_DESKS[item.campusId]}
+                    </Text>
+
+                    {features.adminCollectionTracking &&
+                    accepted.handoverMode === 'ADMIN' &&
+                    accepted.adminDropoffStatus === 'SUBMITTED' ? (
+                      <Button
+                        label="I collected it from Admin"
+                        variant="secondary"
+                        onPress={() =>
+                          markAdminCollected(accepted.id).catch((e) => Alert.alert('Error', e.message))
+                        }
+                        style={{ marginTop: spacing.sm }}
+                      />
+                    ) : null}
 
                     <Button
                       label="Confirm item returned"
@@ -168,7 +185,15 @@ export function MyActivityScreen({ navigation }: any) {
                 </View>
 
                 <Text style={styles.cardTitle}>{row.item.title}</Text>
-                <Text style={styles.cardMeta}>Direct handover to owner</Text>
+                <Text style={styles.cardMeta}>
+                  {row.match.handoverMode === 'DIRECT'
+                    ? 'Direct handover to owner'
+                    : `Submitted to BITS Admin · ${
+                        row.match.adminDropoffStatus === 'COLLECTED'
+                          ? 'collected by owner'
+                          : 'awaiting collection'
+                      }`}
+                </Text>
 
                 <Button
                   label="Open request"
@@ -240,7 +265,12 @@ const styles = StyleSheet.create({
   cardTitle: { ...font.h3, marginTop: spacing.sm },
   cardMeta: { ...font.caption, marginTop: 2, lineHeight: 18 },
   time: { ...font.caption, color: colors.textFaint },
-  callout: { ...font.caption, color: colors.amber, fontWeight: '700', marginTop: spacing.sm },
+  callout: {
+    ...font.caption,
+    color: colors.amber,
+    fontWeight: '700',
+    marginTop: spacing.sm,
+  },
   handoverBox: {
     marginTop: spacing.md,
     padding: spacing.md,
