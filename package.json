@@ -1,40 +1,16 @@
 {
-  "name": "bts-find",
-  "version": "1.0.0",
-  "main": "index.ts",
-  "dependencies": {
-    "@expo/vector-icons": "^15.0.2",
-    "@react-native-async-storage/async-storage": "2.2.0",
-    "@react-navigation/bottom-tabs": "^7.18.14",
-    "@react-navigation/native": "^7.3.14",
-    "@react-navigation/native-stack": "^7.18.6",
-    "expo": "~57.0.9",
-    "expo-device": "~57.0.1",
-    "expo-image-manipulator": "~57.0.7",
-    "expo-image-picker": "~57.0.7",
-    "expo-linear-gradient": "~57.0.1",
-    "expo-notifications": "~57.0.8",
-    "expo-status-bar": "~57.0.1",
-    "firebase": "^12.17.1",
-    "react": "19.2.3",
-    "react-native": "0.86.2",
-    "react-native-gesture-handler": "~2.32.0",
-    "react-native-safe-area-context": "~5.7.0",
-    "react-native-screens": "~4.26.0"
+  "name": "bits-find",
+  "private": true,
+  "packageManager": "pnpm@10",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "mobile": "pnpm --filter mobile start"
   },
   "devDependencies": {
-    "@expo/ngrok": "^4.1.3",
-    "@types/react": "~19.2.2",
-    "typescript": "~6.0.3"
-  },
-  "scripts": {
-    "start": "expo start",
-    "android": "expo run:android",
-    "ios": "expo run:ios",
-    "web": "expo start --web",
-    "phase": "node scripts/set-phase.js",
-    "typecheck": "tsc --noEmit",
-    "verify": "node scripts/verify-phases.js"
-  },
-  "private": true
+    "turbo": "^2.5.0"
+  }
 }
