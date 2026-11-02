@@ -1,14 +1,15 @@
 {
   "name": "bits-find",
   "private": true,
-  "packageManager": "pnpm@10",
+  "packageManager": "pnpm@10.34.6",
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
-    "mobile": "pnpm --filter mobile start"
+    "mobile": "pnpm --filter mobile start",
+    "web": "pnpm --filter web dev"
   },
   "devDependencies": {
     "turbo": "^2.5.0"

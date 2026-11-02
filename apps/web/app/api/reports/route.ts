@@ -1,0 +1,154 @@
+import {
+  account,
+  database,
+  photos,
+  field,
+  privateJson,
+  error,
+  validWrite,
+  venueTypes,
+  categories,
+  limitedBody,
+} from "@/lib/store";
+export async function GET() {
+  const user = await account();
+  if (!user) return error("Sign in to view your reports.", 401);
+  try {
+    const result = await database()
+      .prepare(
+        "SELECT id, reference, title, category, organisation, venue_type AS venueType, location, event_date AS eventDate, event_time AS eventTime, description, status, photo_key AS photoKey, created_at AS createdAt FROM lost_reports WHERE user_id = ? ORDER BY created_at DESC LIMIT 100",
+      )
+      .bind(user.userId)
+      .all();
+    const reports = result.results.map((r) => ({
+      ...r,
+      status:
+        r.status === "OPEN" && Date.now() - Number(r.createdAt) > 14 * 86400000
+          ? "EXPIRED"
+          : r.status,
+    }));
+    return privateJson({ reports });
+  } catch (e) {
+    console.error("Report read failed", e);
+    return error("Your reports could not be loaded. Please try again.", 503);
+  }
+}
+export async function POST(request: Request) {
+  const user = await account();
+  if (!user) return error("Sign in to save your report.", 401);
+  if (!validWrite(request))
+    return error("Please submit from the website.", 403);
+  let key: string | null = null;
+  try {
+    const bytes = await limitedBody(request, 6 * 1024 * 1024);
+    const data = await new Response(bytes, {
+      headers: { "Content-Type": request.headers.get("content-type") ?? "" },
+    }).formData();
+    const title = field(data, "title", 120),
+      category = field(data, "category"),
+      organisation = field(data, "organisation"),
+      venueType = field(data, "venueType"),
+      location = field(data, "location", 400),
+      eventDate = field(data, "eventDate", 10),
+      eventTime = field(data, "eventTime", 5),
+      description = field(data, "description", 2000),
+      contactMode = field(data, "contactMode"),
+      contactValue = field(data, "contactValue", 150);
+    if (
+      !title ||
+      !organisation ||
+      !location ||
+      description.length < 10 ||
+      !categories.includes(category) ||
+      !venueTypes.includes(venueType) ||
+      !["In-app", "Email", "Phone"].includes(contactMode) ||
+      data.get("consent") !== "true"
+    )
+      return error(
+        "Please complete the report details and accept the pilot notice.",
+      );
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(eventDate) ||
+      Number.isNaN(Date.parse(eventDate)) ||
+      new Date(eventDate) > new Date(new Date().toISOString().slice(0, 10))
+    )
+      return error("Choose a valid date that is not in the future.");
+    if (eventTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(eventTime))
+      return error("Choose a valid approximate time.");
+    if (
+      contactMode === "Email" &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactValue)
+    )
+      return error("Enter a valid contact email.");
+    if (contactMode === "Phone" && !/^\+?[\d ()-]{7,25}$/.test(contactValue))
+      return error("Enter a valid phone number.");
+    const recent = await database()
+      .prepare(
+        "SELECT COUNT(*) AS count FROM lost_reports WHERE user_id = ? AND created_at > ?",
+      )
+      .bind(user.userId, Date.now() - 3600000)
+      .first<{ count: number }>();
+    if ((recent?.count ?? 0) >= 20)
+      return error(
+        "You've reached the pilot's hourly report limit. Please try later.",
+        429,
+      );
+    const id = crypto.randomUUID();
+    const reference =
+      "LNF-" + id.replaceAll("-", "").slice(0, 12).toUpperCase();
+    const photo = data.get("photo");
+    if (photo && typeof photo !== "string" && photo.size) {
+      if (photo.size > 5 * 1024 * 1024)
+        return error("The photo must be 5 MB or smaller.");
+      const raw = await photo.arrayBuffer();
+      const b = new Uint8Array(raw);
+      const mime =
+        b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff
+          ? "image/jpeg"
+          : b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47
+            ? "image/png"
+            : String.fromCharCode(...b.slice(0, 4)) === "RIFF" &&
+                String.fromCharCode(...b.slice(8, 12)) === "WEBP"
+              ? "image/webp"
+              : null;
+      if (!mime) return error("Use a JPG, PNG or WebP photo.");
+      key = `reports/${id}`;
+      await photos().put(key, raw, { httpMetadata: { contentType: mime } });
+    }
+    await database()
+      .prepare(
+        "INSERT INTO lost_reports (id, reference, user_id, title, category, organisation, venue_type, location, event_date, event_time, description, contact_mode, contact_value, status, photo_key, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'OPEN', ?, ?)",
+      )
+      .bind(
+        id,
+        reference,
+        user.userId,
+        title,
+        category,
+        organisation,
+        venueType,
+        location,
+        eventDate,
+        eventTime,
+        description,
+        contactMode,
+        contactValue,
+        key,
+        Date.now(),
+      )
+      .run();
+    return privateJson({ id, reference, status: "OPEN" }, 201);
+  } catch (e) {
+    if (key)
+      try {
+        await photos().delete(key);
+      } catch {}
+    console.error("Report save failed", e);
+    return error(
+      e instanceof Error && e.message === "Submission too large"
+        ? "Your submission is too large. Use a smaller photo."
+        : "Your report could not be saved. Your details are still here; please try again.",
+      503,
+    );
+  }
+}
