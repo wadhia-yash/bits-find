@@ -1,22 +1,10 @@
 import { HandoverBadge } from '../components/StatusBadge';
 import { StatCard } from '../components/StatCard';
-import { handoverStats, shortDate } from '../stats';
-import { AdminHandover, CAMPUSES } from '../types';
+import { handoverStats } from '../stats';
+import type { PageProps } from '../types';
+import { campusLabel, formatHours, shortDate } from '../utils';
 
-interface Props {
-  handovers: AdminHandover[];
-  showCampus: boolean;
-}
-
-/** Hours as "1d 6h" or "14.5h". */
-function formatHours(hours: number): string {
-  if (hours < 24) return `${hours}h`;
-  const days = Math.floor(hours / 24);
-  const rest = Math.round(hours - days * 24);
-  return `${days}d ${rest}h`;
-}
-
-export function Handovers({ handovers, showCampus }: Props) {
+export function Handovers({ handovers, showCampus }: PageProps) {
   const stats = handoverStats(handovers);
   return (
     <>
@@ -55,7 +43,7 @@ export function Handovers({ handovers, showCampus }: Props) {
                 {handovers.map((h) => (
                   <tr key={h.id}>
                     <td className="cell-title">{h.itemTitle}</td>
-                    {showCampus && <td>{CAMPUSES.find((c) => c.id === h.campusId)?.label}</td>}
+                    {showCampus && <td>{campusLabel(h.campusId)}</td>}
                     <td>{shortDate(h.submittedAt)}</td>
                     <td>{h.collectedAt ? shortDate(h.collectedAt) : '–'}</td>
                     <td><HandoverBadge status={h.status} /></td>

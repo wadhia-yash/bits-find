@@ -1,15 +1,9 @@
 import { useMemo, useState } from 'react';
 import { ItemsTable } from '../components/ItemsTable';
-import { AdminItem, ItemStatus, STATUS_LABEL } from '../types';
+import { STATUS_FILTERS } from '../constants';
+import { ItemStatus, PageProps, STATUS_LABEL } from '../types';
 
-const FILTERS: (ItemStatus | 'ALL')[] = ['ALL', 'OPEN', 'CLAIM_PENDING', 'RETURNED', 'EXPIRED'];
-
-interface Props {
-  items: AdminItem[];
-  showCampus: boolean;
-}
-
-export function LostItems({ items, showCampus }: Props) {
+export function LostItems({ items, showCampus }: PageProps) {
   const [status, setStatus] = useState<ItemStatus | 'ALL'>('ALL');
   const [query, setQuery] = useState('');
 
@@ -30,7 +24,7 @@ export function LostItems({ items, showCampus }: Props) {
     <>
       <div className="toolbar">
         <div className="chips" role="group" aria-label="Filter by status">
-          {FILTERS.map((f) => (
+          {STATUS_FILTERS.map((f) => (
             <button
               key={f}
               type="button"

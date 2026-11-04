@@ -1,19 +1,12 @@
 import { useMemo, useState } from 'react';
-import { Page, Sidebar } from './components/Sidebar';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { Sidebar } from './components/Sidebar';
 import { mockHandovers, mockItems } from './mockData';
-import { Handovers } from './pages/Handovers';
-import { LostItems } from './pages/LostItems';
-import { Overview } from './pages/Overview';
+import { ROUTES } from './routes';
 import { CAMPUSES, CampusId } from './types';
 
-const TITLES: Record<Page, { title: string; sub: string }> = {
-  overview: { title: 'Recovery overview', sub: 'How well lost items are finding their way home' },
-  items: { title: 'Lost items', sub: 'Every request, with its current status' },
-  handovers: { title: 'Admin handovers', sub: 'Items dropped off at the BITS Admin desk' },
-};
-
 export default function App() {
-  const [page, setPage] = useState<Page>('overview');
+  const { pathname } = useLocation();
   const [campus, setCampus] = useState<CampusId | 'ALL'>('ALL');
 
   const items = useMemo(
@@ -25,16 +18,16 @@ export default function App() {
     [campus],
   );
   const showCampus = campus === 'ALL';
-  const heading = TITLES[page];
+  const current = ROUTES.find((route) => route.path === pathname) ?? ROUTES[0];
 
   return (
     <div className="shell">
-      <Sidebar page={page} onChange={setPage} />
+      <Sidebar />
       <main className="main">
         <header className="topbar">
           <div>
-            <h1>{heading.title}</h1>
-            <p className="sub">{heading.sub}</p>
+            <h1>{current.title}</h1>
+            <p className="sub">{current.subtitle}</p>
           </div>
           <div className="topbar-right">
             <span className="sample-tag">Sample data</span>
@@ -50,9 +43,16 @@ export default function App() {
           </div>
         </header>
 
-        {page === 'overview' && <Overview items={items} showCampus={showCampus} />}
-        {page === 'items' && <LostItems items={items} showCampus={showCampus} />}
-        {page === 'handovers' && <Handovers handovers={handovers} showCampus={showCampus} />}
+        <Routes>
+          {ROUTES.map(({ path, component: Page }) => (
+            <Route
+              key={path}
+              path={path}
+              element={<Page items={items} handovers={handovers} showCampus={showCampus} />}
+            />
+          ))}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </main>
     </div>
   );

@@ -2,15 +2,11 @@ import { CategoryBars } from '../components/CategoryBars';
 import { ItemsTable } from '../components/ItemsTable';
 import { StatCard } from '../components/StatCard';
 import { ZoneChart } from '../components/ZoneChart';
+import { RECENT_ITEMS_LIMIT } from '../constants';
 import { itemsByCategory, itemsByZone, overviewStats } from '../stats';
-import { AdminItem } from '../types';
+import type { PageProps } from '../types';
 
-interface Props {
-  items: AdminItem[];
-  showCampus: boolean;
-}
-
-export function Overview({ items, showCampus }: Props) {
+export function Overview({ items, showCampus }: PageProps) {
   const stats = overviewStats(items);
   return (
     <>
@@ -31,7 +27,7 @@ export function Overview({ items, showCampus }: Props) {
         <CategoryBars rows={itemsByCategory(items)} />
       </div>
 
-      <ItemsTable items={items.slice(0, 8)} showCampus={showCampus} caption="Recent items" />
+      <ItemsTable items={items.slice(0, RECENT_ITEMS_LIMIT)} showCampus={showCampus} caption="Recent items" />
     </>
   );
 }

@@ -1,14 +1,8 @@
-import { shortDate } from '../stats';
-import { AdminItem, CAMPUSES } from '../types';
+import type { ItemsTableProps } from '../types';
+import { campusLabel, shortDate } from '../utils';
 import { StatusBadge } from './StatusBadge';
 
-interface Props {
-  items: AdminItem[];
-  showCampus: boolean;
-  caption: string;
-}
-
-export function ItemsTable({ items, showCampus, caption }: Props) {
+export function ItemsTable({ items, showCampus, caption }: ItemsTableProps) {
   return (
     <section className="panel" aria-label={caption}>
       <header className="panel-head">
@@ -33,7 +27,7 @@ export function ItemsTable({ items, showCampus, caption }: Props) {
               {items.map((item) => (
                 <tr key={item.id}>
                   <td className="cell-title">{item.title}<span className="cell-sub">{item.category}</span></td>
-                  {showCampus && <td>{CAMPUSES.find((c) => c.id === item.campusId)?.label}</td>}
+                  {showCampus && <td>{campusLabel(item.campusId)}</td>}
                   <td>{item.lastSeenZone}</td>
                   <td>{shortDate(item.createdAt)}</td>
                   <td><StatusBadge status={item.status} /></td>

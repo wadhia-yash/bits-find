@@ -1,11 +1,6 @@
-interface Props {
-  label: string;
-  value: string;
-  note: string;
-  highlight?: boolean;
-}
+import type { StatCardProps } from '../types';
 
-export function StatCard({ label, value, note, highlight }: Props) {
+export function StatCard({ label, value, note, highlight }: StatCardProps) {
   return (
     <div className={`stat-card${highlight ? ' highlight' : ''}`}>
       <p className="stat-label">{label}</p>

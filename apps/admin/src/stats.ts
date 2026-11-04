@@ -3,18 +3,8 @@
  * Each one takes the list of items (or handovers) and returns numbers.
  */
 
-import { AdminHandover, AdminItem, CATEGORIES, Category } from './types';
-
-export interface OverviewStats {
-  reported: number;
-  returned: number;
-  /** 0 to 100, one decimal place. */
-  recoveryRate: number;
-  /** Items where a finder has responded and the owner has not confirmed yet. */
-  pendingMatches: number;
-  open: number;
-  expired: number;
-}
+import type { AdminHandover, AdminItem, CategoryStat, HandoverStats, OverviewStats, ZoneStat } from './types';
+import { CATEGORIES } from './types';
 
 export function overviewStats(items: AdminItem[]): OverviewStats {
   const reported = items.length;
@@ -24,12 +14,6 @@ export function overviewStats(items: AdminItem[]): OverviewStats {
   const expired = items.filter((i) => i.status === 'EXPIRED').length;
   const recoveryRate = reported === 0 ? 0 : Math.round((returned / reported) * 1000) / 10;
   return { reported, returned, recoveryRate, pendingMatches, open, expired };
-}
-
-export interface ZoneStat {
-  zone: string;
-  reported: number;
-  returned: number;
 }
 
 /** The busiest places, most reports first. */
@@ -44,11 +28,6 @@ export function itemsByZone(items: AdminItem[], limit = 6): ZoneStat[] {
   return [...map.values()].sort((a, b) => b.reported - a.reported).slice(0, limit);
 }
 
-export interface CategoryStat {
-  category: Category;
-  count: number;
-}
-
 export function itemsByCategory(items: AdminItem[]): CategoryStat[] {
   return CATEGORIES.map((category) => ({
     category,
@@ -56,14 +35,6 @@ export function itemsByCategory(items: AdminItem[]): CategoryStat[] {
   }))
     .filter((row) => row.count > 0)
     .sort((a, b) => b.count - a.count);
-}
-
-export interface HandoverStats {
-  total: number;
-  atDesk: number;
-  collected: number;
-  /** Average hours from drop-off to the owner collecting, or null if none collected. */
-  avgTurnaroundHours: number | null;
 }
 
 export function handoverStats(handovers: AdminHandover[]): HandoverStats {
@@ -78,9 +49,4 @@ export function handoverStats(handovers: AdminHandover[]): HandoverStats {
     collected: collected.length,
     avgTurnaroundHours: collected.length === 0 ? null : Math.round((totalHours / collected.length) * 10) / 10,
   };
-}
-
-/** "30 Sep" style date. */
-export function shortDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
 }

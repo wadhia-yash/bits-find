@@ -1,7 +1,7 @@
-import { CategoryStat } from '../stats';
+import type { CategoryBarsProps } from '../types';
 
 /** Horizontal bars, one row per category. */
-export function CategoryBars({ rows }: { rows: CategoryStat[] }) {
+export function CategoryBars({ rows }: CategoryBarsProps) {
   const max = Math.max(1, ...rows.map((r) => r.count));
   return (
     <section className="panel" aria-label="Items by category">

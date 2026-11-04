@@ -1,17 +1,7 @@
-export type Page = 'overview' | 'items' | 'handovers';
+import { NavLink } from 'react-router-dom';
+import { ROUTES } from '../routes';
 
-const NAV: { id: Page; label: string }[] = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'items', label: 'Lost items' },
-  { id: 'handovers', label: 'Handovers' },
-];
-
-interface Props {
-  page: Page;
-  onChange: (page: Page) => void;
-}
-
-export function Sidebar({ page, onChange }: Props) {
+export function Sidebar() {
   return (
     <aside className="sidebar" aria-label="Main navigation">
       <div className="brand">
@@ -20,16 +10,15 @@ export function Sidebar({ page, onChange }: Props) {
       </div>
       <p className="nav-heading">Admin panel</p>
       <nav>
-        {NAV.map((entry) => (
-          <button
-            key={entry.id}
-            type="button"
-            className={`nav-item${page === entry.id ? ' active' : ''}`}
-            aria-current={page === entry.id ? 'page' : undefined}
-            onClick={() => onChange(entry.id)}
+        {ROUTES.map((route) => (
+          <NavLink
+            key={route.path}
+            to={route.path}
+            end
+            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
           >
-            {entry.label}
-          </button>
+            {route.label}
+          </NavLink>
         ))}
       </nav>
       <p className="sidebar-note">Showing sample data. Not connected to Firebase yet.</p>

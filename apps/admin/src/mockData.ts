@@ -3,7 +3,7 @@
  *
  * To go live later, replace `mockItems` and `mockHandovers` with reads from
  * Firestore (collections `items` and `handover`). Everything else in the admin
- * panel only depends on the shapes in ./types.ts.
+ * panel only depends on the shapes in ./types/.
  *
  * The data is generated from a fixed seed, so the numbers are identical on
  * every reload. That keeps demos predictable.
@@ -17,24 +17,13 @@ import {
   HandoverStatus,
   ItemStatus,
 } from './types';
+import { makeRandom } from './utils';
 
 /** "Today" for the mock data. Fixed so the demo never changes. */
 export const MOCK_NOW = new Date('2026-11-04T10:00:00Z');
 
 const DAY = 24 * 60 * 60 * 1000;
 const HOUR = 60 * 60 * 1000;
-
-/** Small seeded random number generator (mulberry32). */
-function makeRandom(seed: number) {
-  let a = seed;
-  return () => {
-    a |= 0;
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 const rand = makeRandom(20261104);
 const pick = <T,>(list: T[]): T => list[Math.floor(rand() * list.length)];

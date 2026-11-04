@@ -1,7 +1,7 @@
-import { ZoneStat } from '../stats';
+import type { ZoneChartProps } from '../types';
 
 /** Vertical bars: reported (light) next to returned (dark) for each place. */
-export function ZoneChart({ rows }: { rows: ZoneStat[] }) {
+export function ZoneChart({ rows }: ZoneChartProps) {
   const max = Math.max(1, ...rows.map((r) => r.reported));
   return (
     <section className="panel" aria-label="Items by location">

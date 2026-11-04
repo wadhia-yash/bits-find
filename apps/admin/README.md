@@ -29,18 +29,23 @@ The campus dropdown at the top filters every page.
 
 ```
 src/
-  types.ts        Data shapes (copied from apps/mobile/src/types.ts, minus anything personal)
+  routes.tsx      All navigation: one entry per page (path, label, heading, component)
+  constants.ts    Shared constants (status filters, table limits)
+  types/          Data shapes (domain.ts), stats, component props, navigation types
+  utils/          Reusable helpers: formatHours, shortDate, campusLabel, makeRandom
   mockData.ts     The fake records. Replace these to go live.
   stats.ts        All the maths (counts, recovery rate, averages)
   components/     Sidebar, stat cards, charts, tables, badges
   pages/          Overview, Lost items, Handovers
-  App.tsx         Page switching and the campus filter
+  App.tsx         Layout, campus filter and route rendering
 ```
+
+To add a page: build it in `src/pages/`, then add one entry to `ROUTES` in `src/routes.tsx`.
 
 ## Switching to real data later
 
 1. Add Firebase to this app and read the `items` and `handover` collections.
-2. Replace `mockItems` and `mockHandovers` in `src/mockData.ts` with those results (the shapes in `src/types.ts` already match).
+2. Replace `mockItems` and `mockHandovers` in `src/mockData.ts` with those results (the shapes in `src/types/` already match).
 3. Add admin-only access: give admin accounts a custom claim (for example `admin: true`) and update `firebase/firestore.rules` so only admins can read across campuses. This needs the Firebase owner (Yash).
 
 ## Privacy rule
