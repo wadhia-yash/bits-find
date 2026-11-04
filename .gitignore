@@ -48,3 +48,13 @@ build.err
 metro.log
 buildapk.bat
 
+
+# Web workspace and task caches
+.turbo/
+.next/
+.vinext/
+.wrangler/
+.sites-runtime/
+apps/web/next-env.d.ts
+apps/web/.env*
+apps/web/coverage/

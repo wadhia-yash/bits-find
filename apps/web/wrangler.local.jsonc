@@ -1,0 +1,20 @@
+// Local development bindings only.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "bits-find-web",
+  "compatibility_date": "2026-05-15",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "bits-find-web",
+      "database_id": "00000000-0000-4000-8000-000000000000",
+      "migrations_dir": "drizzle"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "bits-find-web-photos"
+    }
+  ]
+}

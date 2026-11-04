@@ -1,0 +1,158 @@
+"use client";
+import Link from "next/link";
+
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import { Scan, Menu } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetDescription,
+  SheetTrigger,
+  SheetClose,
+} from "@/components/ui/sheet";
+export function Brand() {
+  return (
+    <Link href="/" className="brand" aria-label="LnF home">
+      <Scan className="brand-mark" strokeWidth={1.6} />
+      <span>
+        Ln<span style={{ fontWeight: 400 }}>F</span>
+      </span>
+    </Link>
+  );
+}
+const links = [
+  ["Platform", "/platform"],
+  ["Solutions", "/solutions"],
+  ["How it works", "/how-it-works"],
+  ["Pricing", "/pricing"],
+  ["Resources", "/resources"],
+];
+export function SiteHeader() {
+  const path = usePathname();
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const f = () => setScrolled(window.scrollY > 90);
+    f();
+    window.addEventListener("scroll", f, { passive: true });
+    return () => window.removeEventListener("scroll", f);
+  }, []);
+  return (
+    <header
+      className={`site-header ${path !== "/" ? "solid" : ""} ${scrolled ? "scrolled" : ""}`}
+    >
+      <div className="wrap header-inner">
+        <Brand />
+        <nav className="desktop-nav" aria-label="Main navigation">
+          {links.map(([label, href]) => (
+            <Link
+              key={href}
+              className={path === href ? "active" : ""}
+              href={href}
+            >
+              {label}
+            </Link>
+          ))}
+        </nav>
+        <div className="header-actions">
+          <Link className="signin" href="/sign-in">
+            Sign in
+          </Link>
+          <Link className="button" href="/request-demo">
+            Request a demo
+          </Link>
+        </div>
+        <Sheet>
+          <SheetTrigger className="menu-toggle" aria-label="Open navigation">
+            <Menu size={24} />
+          </SheetTrigger>
+          <SheetContent className="mobile-menu">
+            <SheetTitle>LnF</SheetTitle>
+            <SheetDescription>
+              A better journey from lost to found.
+            </SheetDescription>
+            <nav aria-label="Mobile navigation">
+              {[
+                ...links,
+                ["Report a lost item", "/report"],
+                ["Sign in", "/sign-in"],
+                ["Request a demo", "/request-demo"],
+              ].map(([label, href]) => (
+                <SheetClose asChild key={href}>
+                  <Link href={href}>{label}</Link>
+                </SheetClose>
+              ))}
+            </nav>
+          </SheetContent>
+        </Sheet>
+      </div>
+    </header>
+  );
+}
+export function SiteFooter() {
+  return (
+    <footer className="site-footer">
+      <div className="wrap">
+        <div className="footer-top">
+          <div>
+            <Brand />
+            <p>Lost & Found, reimagined.</p>
+          </div>
+          <div className="footer-col">
+            <span className="col-label">The platform</span>
+            <Link href="/platform">Platform</Link>
+            <Link href="/how-it-works">How it works</Link>
+            <Link href="/dashboard">Product preview</Link>
+            <Link href="/security">Security & privacy</Link>
+            <Link href="/integrations">Integrations</Link>
+          </div>
+          <div className="footer-col">
+            <span className="col-label">For your space</span>
+            <Link href="/solutions/cinemas">Cinemas</Link>
+            <Link href="/solutions/malls">Malls</Link>
+            <Link href="/solutions/hotels">Hotels</Link>
+            <Link href="/solutions/universities">Universities</Link>
+            <Link href="/solutions/events">Events & venues</Link>
+            <Link href="/solutions/corporate">Corporate campuses</Link>
+          </div>
+          <div className="footer-col">
+            <span className="col-label">Let&apos;s connect</span>
+            <Link href="/request-demo">Request a demo</Link>
+            <Link href="/pricing">Pricing</Link>
+            <Link href="/about">Our story</Link>
+            <Link href="/resources">Resources</Link>
+            <Link href="/report">Report a lost item</Link>
+            <Link href="/my-reports">My reports</Link>
+          </div>
+        </div>
+        <div className="footer-bottom">
+          <span>© {new Date().getFullYear()} LnF</span>
+          <span>An independent student-built product.</span>
+          <div>
+            <Link href="/privacy">Privacy</Link>
+            <Link href="/terms">Terms</Link>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
+export function DemoCTA() {
+  return (
+    <section className="demo-cta">
+      <div className="wrap">
+        <div>
+          <h2>
+            Let&apos;s give lost things
+            <br />a way back.
+          </h2>
+          <p>Explore a better Lost & Found journey for your organisation.</p>
+        </div>
+        <Link className="button ink" href="/request-demo">
+          Request a demo
+        </Link>
+      </div>
+    </section>
+  );
+}
