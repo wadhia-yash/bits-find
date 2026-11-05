@@ -1,0 +1,4 @@
+node_modules/
+dist/
+# The repo uses pnpm (see the root pnpm-lock.yaml), so skip npm's lockfile.
+package-lock.json
