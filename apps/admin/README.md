@@ -1,53 +1,60 @@
-# BITS Find – Admin Panel
+# LnF – Admin Panel
 
-A small web dashboard for the BITS Admin Department. It shows how well lost items are being recovered, which places and categories see the most reports, and the status of items dropped off at the admin desk.
+A web dashboard for a venue operator (a cinema chain, a theme park, a campus…). It shows how well lost items are being recovered, which branches, screens and categories see the most reports, and the status of items handed in to staff.
 
-**Status:** runs on **mock data** (fake records). It is not connected to Firebase yet.
+It currently runs on **sample data**, for a made-up cinema chain called *Silverscreen Cinemas*. It is not connected to Firebase yet.
 
 ## Run it
 
-From this folder:
-
 ```bash
-npm install     # first time only (or `pnpm install` from the repo root)
-npm run dev     # opens at http://localhost:5173
+npm install
+npm run dev      # opens at http://localhost:5173
+npm run build    # type-check + production build
 ```
 
-Other commands: `npm run typecheck` (check the code for mistakes) and `npm run build` (make the production version in `dist/`).
+## Pages
 
-## What's on each page
-
-| Page | Shows |
+| Page | What it shows |
 | --- | --- |
-| **Overview** | Items reported, returned, recovery rate, pending matches; bar charts by location and category; recent items |
-| **Lost items** | Every request, filterable by status and searchable |
-| **Handovers** | BITS Admin desk drop-offs, how many are waiting, and the average time until the owner collects |
+| **Overview** | Reported, returned, recovery rate, pending matches; a chart by branch (or by screen/area once one branch is picked); items by category; items by screen format; recent items |
+| **Lost items** | Every request, filterable by status, searchable by item, category or place |
+| **Handovers** | Items handed in to the venue's staff desk, how many are waiting, and the average time until the owner collects |
 
-The campus dropdown at the top filters every page.
+The branch dropdown at the top filters every page.
 
-## How it's organised
+## How it adapts to different businesses
+
+Everything that differs between businesses lives in one **organization config**: its name, its own words ("Branch", "Screen / area", "Guest services"), its branches, the screens/areas inside each branch (with an optional format such as 2D / 3D / IMAX / 4DX / Dolby Atmos), and its item categories.
+
+To add a theme park, for example:
+
+1. Copy `src/config/organizations/silverscreen.ts` to `themepark.ts` and change the names, branches, areas and categories (leave out `terms.format` and the area `format`s if there is no such idea).
+2. Add it to the list in `src/config/organizations/index.ts`.
+
+No screen needs to change. When two or more organizations exist, an organization switcher appears in the sidebar by itself.
+
+## Folder guide
 
 ```
 src/
-  routes.tsx      All navigation: one entry per page (path, label, heading, component)
-  constants.ts    Shared constants (status filters, table limits)
-  types/          Data shapes (domain.ts), stats, component props, navigation types
-  utils/          Reusable helpers: formatHours, shortDate, campusLabel, makeRandom
-  mockData.ts     The fake records. Replace these to go live.
-  stats.ts        All the maths (counts, recovery rate, averages)
-  components/     Sidebar, stat cards, charts, tables, badges
-  pages/          Overview, Lost items, Handovers
-  App.tsx         Layout, campus filter and route rendering
+  config/organizations/   One file per business + the list of all of them
+  data/mock.ts            Sample data generated from each config (replace with Firebase later)
+  types/                  Data shapes: domain, organization, stats, component props, navigation
+  utils/                  Reusable helpers: formatHours, shortDate, branchName, areaName, makeRandom
+  components/             StatCard, LocationChart, BarList, ItemsTable, StatusBadge, Sidebar
+  pages/                  Overview, LostItems, Handovers
+  routes.tsx              All navigation in one place
+  stats.ts                The dashboard maths
+  constants.ts            Product name, filter lists, limits
+  App.tsx                 Layout, organization/branch state, route rendering
 ```
 
-To add a page: build it in `src/pages/`, then add one entry to `ROUTES` in `src/routes.tsx`.
+## Privacy
 
-## Switching to real data later
+The admin panel shows only counts, statuses, categories and places. It never shows phone numbers, emails, guest names or private match text.
 
-1. Add Firebase to this app and read the `items` and `handover` collections.
-2. Replace `mockItems` and `mockHandovers` in `src/mockData.ts` with those results (the shapes in `src/types/` already match).
-3. Add admin-only access: give admin accounts a custom claim (for example `admin: true`) and update `firebase/firestore.rules` so only admins can read across campuses. This needs the Firebase owner (Yash).
+## Going live with real data (later)
 
-## Privacy rule
-
-The admin panel only shows counts, statuses, categories and places. It never shows phone numbers, emails, owner names or private match text. Keep it that way when connecting real data.
+1. Replace `src/data/mock.ts` with Firestore reads (same shapes as `src/types/domain.ts`).
+2. Add admin-only access: give admin accounts a custom claim (for example `admin: true`) and update `firebase/firestore.rules` so only that organization's admins can read its data. This needs the Firebase owner (Yash).
+3. Add a sign-in page.

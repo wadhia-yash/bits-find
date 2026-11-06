@@ -1,28 +1,42 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar';
-import { mockHandovers, mockItems } from './mockData';
+import { ORGANIZATIONS } from './config/organizations';
+import { ALL, PRODUCT_NAME } from './constants';
+import { mockHandovers, mockItems } from './data/mock';
 import { ROUTES } from './routes';
-import { CAMPUSES, CampusId } from './types';
+import type { BranchFilter } from './types';
 
 export default function App() {
   const { pathname } = useLocation();
-  const [campus, setCampus] = useState<CampusId | 'ALL'>('ALL');
+  const [orgId, setOrgId] = useState(ORGANIZATIONS[0].id);
+  const [branchId, setBranchId] = useState<BranchFilter>(ALL);
+
+  const org = ORGANIZATIONS.find((o) => o.id === orgId) ?? ORGANIZATIONS[0];
+
+  useEffect(() => {
+    document.title = `${PRODUCT_NAME} Admin · ${org.name}`;
+  }, [org.name]);
+
+  const changeOrg = (id: string) => {
+    setOrgId(id);
+    setBranchId(ALL); // branches belong to one organization
+  };
 
   const items = useMemo(
-    () => mockItems.filter((i) => campus === 'ALL' || i.campusId === campus),
-    [campus],
+    () => mockItems.filter((i) => i.orgId === org.id && (branchId === ALL || i.branchId === branchId)),
+    [org.id, branchId],
   );
   const handovers = useMemo(
-    () => mockHandovers.filter((h) => campus === 'ALL' || h.campusId === campus),
-    [campus],
+    () => mockHandovers.filter((h) => h.orgId === org.id && (branchId === ALL || h.branchId === branchId)),
+    [org.id, branchId],
   );
-  const showCampus = campus === 'ALL';
+  const showBranch = branchId === ALL;
   const current = ROUTES.find((route) => route.path === pathname) ?? ROUTES[0];
 
   return (
     <div className="shell">
-      <Sidebar />
+      <Sidebar org={org} orgs={ORGANIZATIONS} onOrgChange={changeOrg} />
       <main className="main">
         <header className="topbar">
           <div>
@@ -32,11 +46,11 @@ export default function App() {
           <div className="topbar-right">
             <span className="sample-tag">Sample data</span>
             <label className="select-label">
-              <span className="sr-only">Campus</span>
-              <select value={campus} onChange={(e) => setCampus(e.target.value as CampusId | 'ALL')}>
-                <option value="ALL">All campuses</option>
-                {CAMPUSES.map((c) => (
-                  <option key={c.id} value={c.id}>{c.label}</option>
+              <span className="sr-only">{org.terms.branch}</span>
+              <select value={branchId} onChange={(e) => setBranchId(e.target.value)}>
+                <option value={ALL}>All {org.terms.branches.toLowerCase()}</option>
+                {org.branches.map((b) => (
+                  <option key={b.id} value={b.id}>{b.label}</option>
                 ))}
               </select>
             </label>
@@ -48,7 +62,7 @@ export default function App() {
             <Route
               key={path}
               path={path}
-              element={<Page items={items} handovers={handovers} showCampus={showCampus} />}
+              element={<Page org={org} branchId={branchId} items={items} handovers={handovers} showBranch={showBranch} />}
             />
           ))}
           <Route path="*" element={<Navigate to="/" replace />} />

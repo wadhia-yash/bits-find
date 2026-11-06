@@ -4,14 +4,27 @@
  */
 
 import type { AdminHandover, AdminItem, HandoverStatus, ItemStatus } from './domain';
-import type { CategoryStat, ZoneStat } from './stats';
+import type { OrganizationConfig } from './organization';
+import type { CountStat, GroupStat } from './stats';
 
-/** What every page receives from App (already filtered by the campus dropdown). */
+/** Value of the branch dropdown when no single branch is picked. */
+export type BranchFilter = string | 'ALL';
+
+/** What every page receives from App (already filtered by the branch dropdown). */
 export interface PageProps {
+  org: OrganizationConfig;
+  branchId: BranchFilter;
   items: AdminItem[];
   handovers: AdminHandover[];
-  /** Show the Campus column? Only useful when "All campuses" is selected. */
-  showCampus: boolean;
+  /** Show the Branch column? Only useful when all branches are shown together. */
+  showBranch: boolean;
+}
+
+export interface SidebarProps {
+  org: OrganizationConfig;
+  /** Every organization available. The switcher only appears when there are two or more. */
+  orgs: OrganizationConfig[];
+  onOrgChange: (orgId: string) => void;
 }
 
 export interface StatCardProps {
@@ -29,16 +42,19 @@ export interface HandoverBadgeProps {
   status: HandoverStatus;
 }
 
-export interface ZoneChartProps {
-  rows: ZoneStat[];
+export interface LocationChartProps {
+  title: string;
+  rows: GroupStat[];
 }
 
-export interface CategoryBarsProps {
-  rows: CategoryStat[];
+export interface BarListProps {
+  title: string;
+  rows: CountStat[];
 }
 
 export interface ItemsTableProps {
+  org: OrganizationConfig;
   items: AdminItem[];
-  showCampus: boolean;
+  showBranch: boolean;
   caption: string;
 }

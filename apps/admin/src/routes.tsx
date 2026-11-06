@@ -28,8 +28,8 @@ export const ROUTES: AppRoute[] = [
   {
     path: '/handovers',
     label: 'Handovers',
-    title: 'Admin handovers',
-    subtitle: 'Items dropped off at the BITS Admin desk',
+    title: 'Handovers',
+    subtitle: 'Items handed in to staff for safekeeping',
     component: Handovers,
   },
 ];

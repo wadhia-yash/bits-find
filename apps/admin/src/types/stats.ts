@@ -1,5 +1,3 @@
-import type { Category } from './domain';
-
 export interface OverviewStats {
   reported: number;
   returned: number;
@@ -11,14 +9,16 @@ export interface OverviewStats {
   expired: number;
 }
 
-export interface ZoneStat {
-  zone: string;
+/** Reported vs returned for one place (a branch, or a screen/area). */
+export interface GroupStat {
+  label: string;
   reported: number;
   returned: number;
 }
 
-export interface CategoryStat {
-  category: Category;
+/** A plain count for one label (a category, a screen format). */
+export interface CountStat {
+  label: string;
   count: number;
 }
 
