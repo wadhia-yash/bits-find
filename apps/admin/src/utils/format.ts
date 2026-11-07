@@ -1,5 +1,3 @@
-import { CAMPUSES, CampusId } from '../types';
-
 /** Hours as "14.5h", or "1d 6h" once it passes a day. */
 export function formatHours(hours: number): string {
   if (hours < 24) return `${hours}h`;
@@ -11,9 +9,4 @@ export function formatHours(hours: number): string {
 /** "30 Sep" style date. */
 export function shortDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
-}
-
-/** "BITS Pilani" for "pilani". */
-export function campusLabel(id: CampusId): string {
-  return CAMPUSES.find((c) => c.id === id)?.label ?? id;
 }

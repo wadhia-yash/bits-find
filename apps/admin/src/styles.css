@@ -145,3 +145,12 @@ tr:last-child td { border-bottom: 0; }
   .two-col { grid-template-columns: 1fr; }
   .search { min-width: 0; width: 100%; }
 }
+
+/* ---------- organization box (sidebar) ---------- */
+.org-box { padding: 4px 0 14px; }
+.org-name { padding: 0 10px; font-size: 14px; font-weight: 600; color: #fff; }
+.org-select {
+  width: calc(100% - 20px); margin: 0 10px; padding: 7px 8px; border-radius: 8px;
+  border: 1px solid #3a3f49; background: #1f232b; color: #fff; font: inherit; font-size: 13px;
+}
+@media (max-width: 800px) { .org-box { display: none; } }
